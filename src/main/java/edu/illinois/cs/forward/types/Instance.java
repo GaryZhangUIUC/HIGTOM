@@ -1,7 +1,5 @@
 package edu.illinois.cs.forward.types;
 
-import edu.illinois.cs.forward.geography.Location;
-
 import java.util.List;
 
 /**

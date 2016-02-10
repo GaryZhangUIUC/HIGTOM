@@ -1,6 +1,6 @@
 package edu.illinois.cs.forward.importers;
 
-import edu.illinois.cs.forward.geography.Location;
+import edu.illinois.cs.forward.types.Location;
 import edu.illinois.cs.forward.types.DataSet;
 import edu.illinois.cs.forward.types.Instance;
 import org.json.JSONArray;
