@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A data set, including a collection of instances and the dictionary used to convert words from/to ids
+ * A data set, including a collection of instances and the dictionary used to convert words from/to ids.
  */
 public class DataSet {
     public List<Instance> data;

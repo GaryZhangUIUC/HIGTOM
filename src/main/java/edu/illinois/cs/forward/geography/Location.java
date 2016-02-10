@@ -1,7 +1,7 @@
 package edu.illinois.cs.forward.geography;
 
 /**
- * Geographical information container
+ * Geographical information container.
  */
 public class Location {
     public double longitude;

@@ -5,7 +5,7 @@ import edu.illinois.cs.forward.geography.Location;
 import java.util.List;
 
 /**
- * A single instance, where words are hashed into ids
+ * A single instance, where words are hashed into ids.
  */
 public class Instance {
     public List<Integer> wordIds;
