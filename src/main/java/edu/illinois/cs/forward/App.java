@@ -1,13 +1,12 @@
 package edu.illinois.cs.forward;
 
 /**
- * Hello world!
+ * The main program to run the framework
  *
  */
-public class App 
-{
+public class App {
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!" );
+        System.out.println( "Good luck!" );
     }
 }
