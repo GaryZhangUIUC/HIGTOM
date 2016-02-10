@@ -1,4 +1,4 @@
-package edu.illinois.cs.forward.types;
+package edu.illinois.cs.forward.geography;
 
 /**
  * Geographical information container
