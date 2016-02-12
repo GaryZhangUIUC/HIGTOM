@@ -31,4 +31,8 @@ public class Node {
         this.wordCounts = new HashMap<Integer, Integer>();
         this.location = null;
     }
+
+    public boolean isLeaf() {
+        return children.isEmpty();
+    }
 }
