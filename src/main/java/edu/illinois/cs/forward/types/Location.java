@@ -19,4 +19,8 @@ public class Location {
         this.latitudeVariance = 0.0;
         this.longitudeLatitudeCovariance = 0.0;
     }
+
+    public double locationProbability(Location target) {
+        return 0.0;
+    }
 }
