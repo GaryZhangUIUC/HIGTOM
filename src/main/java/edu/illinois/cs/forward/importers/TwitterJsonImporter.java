@@ -12,9 +12,9 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 /**
- * An importer to get a data set from a Twitter json file.
+ * An importer to get a data set from a Twitter json file. A stop word set is also used here.
  */
-public class TwitterJsonImporter implements CanImport {
+public class TwitterJsonImporter extends AbstractImporter {
     public String twitterJsonPath;
     public String stopWordFilePath;
 
@@ -28,11 +28,9 @@ public class TwitterJsonImporter implements CanImport {
         this.stopWordFilePath = null;
     }
 
-    public DataSet getDataSet() {
+    @Override
+    public DataSet getDataSet(Map<String, Integer> word2Id, Map<Integer, String> id2Word, int nextId) {
         List<Instance> data = new ArrayList<Instance>();
-        Map<String, Integer> word2Id = new HashMap<String, Integer>();
-        Map<Integer, String> id2Word = new HashMap<Integer, String>();
-        int currentId = 0;
 
         Set<String> stopWords = getStopWords();
 
@@ -58,8 +56,8 @@ public class TwitterJsonImporter implements CanImport {
                         if (word2Id.containsKey(word)) {
                             wordId = word2Id.get(word);
                         } else {
-                            wordId = currentId;
-                            currentId++;
+                            wordId = nextId;
+                            nextId++;
                             word2Id.put(word, wordId);
                             id2Word.put(wordId, word);
                         }

@@ -24,6 +24,7 @@ public class NCRPEstimator {
 
     public void updateLikelihoods(Map<Node, Double> likelihoods, Node currentNode, double likelihoodOffset) {
         double oldProb = likelihoods.getOrDefault(currentNode, 0.0);
+
         if (currentNode.isLeaf()) {
             likelihoods.put(currentNode, oldProb + likelihoodOffset);
         } else {

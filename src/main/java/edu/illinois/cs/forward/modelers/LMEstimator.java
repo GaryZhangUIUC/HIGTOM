@@ -64,7 +64,7 @@ public class LMEstimator {
         }
 
         for (int newLevel = level + 1; newLevel < newWieghts4Levels.length; newLevel++) {
-            languageLikelihood += newWieghts4Levels[level];
+            languageLikelihood += newWieghts4Levels[newLevel];
         }
 
         likelihoods.put(currentNode, oldProb + likelihoodOffset + languageLikelihood);
