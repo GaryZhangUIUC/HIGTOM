@@ -29,10 +29,12 @@ public class TwitterJsonImporter extends AbstractImporter {
     }
 
     @Override
-    public DataSet getDataSet(Map<String, Integer> word2Id, Map<Integer, String> id2Word, int nextId) {
+    public DataSet getDataSet(Map<String, Integer> word2Id, Map<Integer, String> id2Word) {
         List<Instance> data = new ArrayList<Instance>();
 
         Set<String> stopWords = getStopWords();
+
+        int nextId = findNextId(id2Word);
 
         try {
             Scanner twitterReader = new Scanner(new File(twitterJsonPath));
@@ -47,6 +49,7 @@ public class TwitterJsonImporter extends AbstractImporter {
                 String[] words = text.split("\\s+");
                 List<Integer> wordIds = new ArrayList<Integer>();
                 for (String word : words) {
+                    word = word.toLowerCase();
                     if (!stopWords.contains(word) &&
                             word.length() > 1 &&
                             !word.startsWith("http") &&

@@ -11,14 +11,17 @@ public class Model {
 
     public Map<String, Integer> word2Id;
     public Map<Integer, String> id2Word;
-    public int nextId;
 
     public Model(int numLevels) {
         this.numLevels = numLevels;
-        this.root = null;
+        this.root = new Node(null, 0);
 
         this.word2Id = null;
         this.id2Word = null;
-        this.nextId = -1;
+    }
+
+    public void setWordProfile(Map<String, Integer> word2Id, Map<Integer, String> id2Word) {
+        this.word2Id = word2Id;
+        this.id2Word = id2Word;
     }
 }

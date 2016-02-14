@@ -10,8 +10,18 @@ import java.util.Map;
  */
 public abstract class AbstractImporter {
     public DataSet getDataSet() {
-        return getDataSet(new HashMap<String, Integer>(), new HashMap<Integer, String>(), 0);
+        return getDataSet(new HashMap<String, Integer>(), new HashMap<Integer, String>());
     }
 
-    public abstract DataSet getDataSet(Map<String, Integer> word2Id, Map<Integer, String> id2Word, int nextId);
+    public abstract DataSet getDataSet(Map<String, Integer> word2Id, Map<Integer, String> id2Word);
+
+    public int findNextId(Map<Integer, String> id2Word) {
+        int nextId = 0;
+        for (int id: id2Word.keySet()) {
+            if (id >= nextId) {
+                nextId = id + 1;
+            }
+        }
+        return nextId;
+    }
 }
