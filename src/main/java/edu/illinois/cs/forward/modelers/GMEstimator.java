@@ -9,39 +9,11 @@ import java.util.Map;
  * An estimator to calculate the probabilities for language modeling for the tree nodes.
  */
 public class GMEstimator {
-    // TODO chained probability model
-    // TODO use parent or ancestor or sibling variance to smooth or initialize variance
-    // TODO fix variance
-    // smoothing on geographical distributions
+    // imaginary number of coming instances
     public double kappa;
-    public double uniformPdf;
 
-    // the minimum longitude sd as well as the probability sampling height.
-    public double longitudeStep;
-    // the minimum latitude sd as well as the probability sampling width.
-    public double latitudeStep;
-
-    public GMEstimator(double kappa, double uniformPdf) {
+    public GMEstimator(double kappa) {
         this.kappa = kappa;
-        this.uniformPdf = uniformPdf;
-
-        this.longitudeStep = 0.00001;
-        this.latitudeStep = 0.00001;
-    }
-
-    /**
-     * Create a Geographic Model estimator with a full custom setting.
-     * @param kappa smoothing parameter.
-     * @param uniformPdf smoothing pdf.
-     * @param longitudeStep serves as the minimum longitude sd as well as the probability sampling height.
-     * @param latitudeStep serves as the minimum latitude sd as well as the probability sampling width.
-     */
-    public GMEstimator(double kappa, double uniformPdf, double longitudeStep, double latitudeStep) {
-        this.kappa = kappa;
-        this.uniformPdf = uniformPdf;
-
-        this.longitudeStep = longitudeStep;
-        this.latitudeStep = latitudeStep;
     }
 
     /**
@@ -50,47 +22,116 @@ public class GMEstimator {
      */
     public void updateLikelihoodsAbsolute(
             Map<Node, Double> likelihoods, Node root,
-            Location target, double[] levelWeights) {
-        updateLikelihoodsAbsolute(likelihoods, root, 0.0, target, levelWeights);
+            Location target, double[] levelWeights,
+            double[] levelSmoothingVariances, double uniformLikelihood) {
+        double[] newLikelihoods = new double[levelWeights.length];
+        newLikelihoods[levelWeights.length - 1] = 0.0;
+        for (int level = levelWeights.length - 2; level >= 0; level--) {
+            newLikelihoods[level] = newLikelihoods[level + 1] + levelWeights[level + 1] * uniformLikelihood;
+        }
+
+        updateLikelihoodsAbsolute(likelihoods, root, 0.0, target, levelWeights,
+                levelSmoothingVariances, newLikelihoods);
     }
 
     public void updateLikelihoodsAbsolute(
             Map<Node, Double> likelihoods, Node currentNode, double likelihoodOffset,
-            Location target, double[] levelWeights) {
+            Location target, double[] levelWeights,
+            double[] levelSmoothingVariances, double[] newLikelihoods) {
         double oldProb = likelihoods.getOrDefault(currentNode, 0.0);
 
-        double gaussianPdf = gaussianPdf(currentNode.location, target);
-        double smoothedPdf = (gaussianPdf * currentNode.numCustomers + uniformPdf * kappa) /
-                (currentNode.numCustomers + kappa);
+        int level = currentNode.level;
 
-        // Should add Math.log(smoothedPdf) + Math.log(longitudeStep * latitudeStep).
-        // However, all path will missed the same amount and thus not needed.
-        double geometricLikelihood = levelWeights[currentNode.level] * Math.log(smoothedPdf);
+        double geographicProbability = smoothedGaussianProbability(
+                currentNode.location, currentNode.numCustomers, target, levelSmoothingVariances[level]);
+
+        double geographicLikelihood = levelWeights[currentNode.level] * Math.log(geographicProbability);
 
         for (Node child: currentNode.children) {
             updateLikelihoodsAbsolute(
-                    likelihoods, child, likelihoodOffset + geometricLikelihood,
-                    target, levelWeights);
+                    likelihoods, child, likelihoodOffset + geographicLikelihood,
+                    target, levelWeights,
+                    levelSmoothingVariances, newLikelihoods);
         }
 
-        for (int newLevel = currentNode.level + 1; newLevel < levelWeights.length; newLevel++) {
-            geometricLikelihood += levelWeights[newLevel] * Math.log(uniformPdf);
-        }
-
-        likelihoods.put(currentNode, oldProb + likelihoodOffset + geometricLikelihood);
+        likelihoods.put(currentNode, oldProb + likelihoodOffset + geographicLikelihood + newLikelihoods[level]);
     }
 
-    public double gaussianPdf(Location source, Location target) {
-        double longitudeSd = Math.max(Math.sqrt(source.longitudeVariance), longitudeStep);
-        double latitudeSd = Math.max(Math.sqrt(source.latitudeVariance), latitudeStep);
+    /**
+     * Estimate the geographical probabilities and update in place the likelihoods for the tree nodes.
+     * This is the chained probability way.
+     */
+    public void updateLikelihoodsChained(
+            Map<Node, Double> likelihoods, Node root,
+            Location target, double[] levelSmoothingVariances) {
+        int numLevels = levelSmoothingVariances.length;
+        double[] newLikelihoods = new double[numLevels];
+        newLikelihoods[numLevels - 1] = 0.0;
+        for (int level = numLevels - 2; level >= 0; level--) {
+            double geographicProbability = smoothedGaussianProbability(
+                    target, 1, target, levelSmoothingVariances[level + 1]);
+
+            double geographicLikelihood = Math.log(geographicProbability);
+
+            newLikelihoods[level] = newLikelihoods[level + 1] + geographicLikelihood;
+        }
+
+
+        updateLikelihoodsChained(likelihoods, root, 0.0, target, levelSmoothingVariances, newLikelihoods);
+    }
+
+    public void updateLikelihoodsChained(
+            Map<Node, Double> likelihoods, Node currentNode, double likelihoodOffset,
+            Location target, double[] levelSmoothingVariances, double[] newLikelihoods) {
+        double oldProb = likelihoods.getOrDefault(currentNode, 0.0);
+
+        int level = currentNode.level;
+
+        for (Node child: currentNode.children) {
+            double geographicProbability = smoothedGaussianProbability(
+                    currentNode.location, currentNode.numCustomers, child.location, levelSmoothingVariances[level]);
+
+            double geographicLikelihood = Math.log(geographicProbability);
+
+            updateLikelihoodsChained(
+                    likelihoods, child, likelihoodOffset + geographicLikelihood,
+                    target, levelSmoothingVariances, newLikelihoods);
+        }
+
+        double geographicProbability = smoothedGaussianProbability(
+                currentNode.location, currentNode.numCustomers, target, levelSmoothingVariances[level]);
+
+        double geographicLikelihood = Math.log(geographicProbability);
+
+        likelihoods.put(currentNode, oldProb + likelihoodOffset + geographicLikelihood + newLikelihoods[level]);
+    }
+
+    /**
+     * Using Pdf to represent probability here.
+     * The reason being that probability = pdf * A for a constant sampling area.
+     */
+    public double smoothedGaussianProbability(
+            Location source, int numSourceInstances,
+            Location target, double smoothingVariance) {
+        double longitudeVariance = (source.longitudeVariance * numSourceInstances + smoothingVariance * kappa) /
+                (numSourceInstances + kappa);
+        double latitudeVariance = (source.latitudeVariance * numSourceInstances + smoothingVariance * kappa) /
+                (numSourceInstances + kappa);
+        double longitudeLatitudeCorrelation = source.longitudeLatitudeCovariance * numSourceInstances /
+                (numSourceInstances + kappa) / Math.sqrt(longitudeVariance * latitudeVariance);
 
         double normalizedDeviation =
                 (target.longitude - source.longitude) * (target.longitude - source.longitude) /
-                        (longitudeSd * longitudeSd) +
+                        longitudeVariance +
                 (target.latitude - source.latitude) * (target.latitude - source.latitude) /
-                        (latitudeSd * latitudeSd);
-        double exponentialPower = -normalizedDeviation / 2.0;
-        double pdf = Math.exp(exponentialPower) / (2 * Math.PI * longitudeSd * latitudeSd);
-        return pdf;
+                        latitudeVariance -
+                2 * longitudeLatitudeCorrelation *
+                        (target.longitude - source.longitude) * (target.latitude - source.latitude) /
+                        Math.sqrt(longitudeVariance * latitudeVariance);
+        double exponentialPower = -normalizedDeviation /
+                (2.0 * (1 - longitudeLatitudeCorrelation * longitudeLatitudeCorrelation));
+        return Math.exp(exponentialPower) / (2 * Math.PI) /
+                Math.sqrt(longitudeVariance * latitudeVariance *
+                        (1 - longitudeLatitudeCorrelation * longitudeLatitudeCorrelation));
     }
 }
