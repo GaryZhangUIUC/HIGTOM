@@ -3,6 +3,7 @@ package edu.illinois.cs.forward.modelers;
 import edu.illinois.cs.forward.types.Node;
 
 import java.util.Map;
+import java.util.Random;
 
 /**
  * An estimator to calculate the probabilities for Nest Chinese Restaurant Process for the tree nodes.
@@ -37,5 +38,16 @@ public class NCRPEstimator {
             updateLikelihoods(likelihoods, child,
                     likelihoodOffset + Math.log((double)child.numCustomers / (currentNode.numCustomers + gamma)));
         }
+    }
+
+    public Node selectNodeChild(Node parent, Random random) {
+        double randomNum = random.nextDouble();
+        for (Node child: parent.children) {
+            randomNum -= (double)child.numCustomers / (gamma + parent.numCustomers);
+            if (randomNum < 0) {
+                return child;
+            }
+        }
+        return parent.addChild();
     }
 }

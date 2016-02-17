@@ -1,5 +1,6 @@
 package edu.illinois.cs.forward.types;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -16,8 +17,8 @@ public class Model {
         this.numLevels = numLevels;
         this.root = new Node(null, 0);
 
-        this.word2Id = null;
-        this.id2Word = null;
+        this.word2Id = new HashMap<String, Integer>();
+        this.id2Word = new HashMap<Integer, String>();
     }
 
     public void setWordProfile(Map<String, Integer> word2Id, Map<Integer, String> id2Word) {

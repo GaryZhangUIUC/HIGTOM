@@ -2,6 +2,7 @@ package edu.illinois.cs.forward.modelers;
 
 import edu.illinois.cs.forward.types.Node;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,11 +23,11 @@ public class LMEstimator {
      */
     public void updateLikelihoods(
             Map<Node, Double> likelihoods, Node root,
-            Map<Integer, Integer>[] wordCounts4Levels) {
-        double[] newWieghts4Levels = new double[wordCounts4Levels.length];
-        for (int level = 0; level < wordCounts4Levels.length; level++) {
+            List<Map<Integer, Integer>> wordCounts4Levels) {
+        double[] newWieghts4Levels = new double[wordCounts4Levels.size()];
+        for (int level = 0; level < wordCounts4Levels.size(); level++) {
             int numWords = 0;
-            for (double wordCount: wordCounts4Levels[level].values()) {
+            for (double wordCount: wordCounts4Levels.get(level).values()) {
                 for (int countIter = 0; countIter < wordCount; countIter++) {
                     newWieghts4Levels[level] += Math.log((eta + countIter) / (etaSum + numWords));
                     numWords++;
@@ -39,14 +40,14 @@ public class LMEstimator {
 
     public void updateLikelihoods(
             Map<Node, Double> likelihoods, Node currentNode, double likelihoodOffset,
-            Map<Integer, Integer>[] wordCounts4Levels, double[] newWieghts4Levels) {
+            List<Map<Integer, Integer>> wordCounts4Levels, double[] newWieghts4Levels) {
         double oldProb = likelihoods.getOrDefault(currentNode, 0.0);
 
         int level = currentNode.level;
 
         double languageLikelihood = 0.0;
         int numNewWords = 0;
-        for (Map.Entry<Integer, Integer> wordCount: wordCounts4Levels[level].entrySet()) {
+        for (Map.Entry<Integer, Integer> wordCount: wordCounts4Levels.get(level).entrySet()) {
             int wordId = wordCount.getKey();
             int count = wordCount.getValue();
             for (int countIter = 0; countIter < count; countIter++) {

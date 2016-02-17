@@ -35,4 +35,101 @@ public class Node {
     public boolean isLeaf() {
         return children.isEmpty();
     }
+
+    public Node addChild() {
+        Node child = new Node(this, level + 1);
+        children.add(child);
+        return child;
+    }
+
+    public void removeChild(Node child) {
+        children.remove(child);
+    }
+
+    public void addCustomer() {
+        numCustomers++;
+    }
+
+    public void removeCustomer() {
+        numCustomers--;
+        if (parent != null && numCustomers == 0) {
+            parent.removeChild(this);
+        }
+    }
+
+    /**
+     * It's set to update the location after adding the customer.
+     */
+    public void updateLocationAfterAdding(Location locationAdded) {
+        if (location == null) {
+            location = locationAdded;
+        } else {
+            double newLongitudeMean = (location.longitude * (numCustomers - 1) + locationAdded.longitude) /
+                    numCustomers;
+            double newLatitudeMean = (location.latitude * (numCustomers - 1) + locationAdded.latitude) /
+                    numCustomers;
+            location.longitudeVariance = (location.longitudeVariance * (numCustomers - 1) +
+                    (newLongitudeMean - location.longitude) * (newLongitudeMean - location.longitude) *
+                            (numCustomers - 1) +
+                    (locationAdded.longitude - newLongitudeMean) * (locationAdded.longitude - newLongitudeMean)) /
+                    numCustomers;
+            location.longitudeLatitudeCovariance = (location.longitudeLatitudeCovariance * (numCustomers - 1) +
+                    (newLongitudeMean - location.longitude) * (newLatitudeMean - location.latitude) *
+                            (numCustomers - 1) +
+                    (locationAdded.longitude - newLongitudeMean) * (locationAdded.latitude - newLatitudeMean)) /
+                    numCustomers;
+            location.latitudeVariance = (location.latitudeVariance * (numCustomers - 1) +
+                    (newLatitudeMean - location.latitude) * (newLatitudeMean - location.latitude) *
+                            (numCustomers - 1) +
+                    (locationAdded.latitude - newLatitudeMean) * (locationAdded.latitude - newLatitudeMean)) /
+                    numCustomers;
+            location.longitude = newLongitudeMean;
+            location.latitude = newLatitudeMean;
+        }
+    }
+
+    /**
+     * It's set to update the location after removing the customer.
+     */
+    public void updateLocationAfterRemoving(Location locationRemoved) {
+        if (numCustomers != 0) {
+            double oldLongitudeMean = (location.longitude * (numCustomers + 1) - locationRemoved.longitude) /
+                    numCustomers;
+            double oldLatitudeMean = (location.latitude * (numCustomers + 1) - locationRemoved.latitude) /
+                    numCustomers;
+            location.longitudeVariance = (location.longitudeVariance * (numCustomers + 1) -
+                    (oldLongitudeMean - location.longitude) * (oldLongitudeMean - location.longitude) * numCustomers -
+                    (locationRemoved.longitude - location.longitude) *
+                            (locationRemoved.longitude - location.longitude)) /
+                    numCustomers;
+            location.longitudeLatitudeCovariance = (location.longitudeLatitudeCovariance * (numCustomers + 1) -
+                    (oldLongitudeMean - location.longitude) * (oldLatitudeMean - location.latitude) * numCustomers -
+                    (locationRemoved.longitude - location.longitude) *
+                            (locationRemoved.latitude - location.latitude)) /
+                    numCustomers;
+            location.latitudeVariance = (location.latitudeVariance * (numCustomers + 1) -
+                    (oldLatitudeMean - location.latitude) * (oldLatitudeMean - location.latitude) * numCustomers -
+                    (locationRemoved.latitude - location.latitude) *
+                            (locationRemoved.latitude - location.latitude)) /
+                    numCustomers;
+            location.longitude = oldLongitudeMean;
+            location.latitude = oldLatitudeMean;
+        }
+    }
+
+    public void addWord(int wordId) {
+        numWords++;
+        int oldCount = wordCounts.getOrDefault(wordId, 0);
+        wordCounts.put(wordId, oldCount + 1);
+    }
+
+    public void removeWord(int wordId) {
+        numWords--;
+        int oldCount = wordCounts.get(wordId);
+        if (oldCount == 1) {
+            wordCounts.remove(wordId);
+        } else {
+            wordCounts.put(wordId, oldCount - 1);
+        }
+    }
 }
