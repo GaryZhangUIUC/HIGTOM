@@ -32,7 +32,7 @@ public class Modeler {
 
     public Modeler(
             Model model, DataSet dataSet,
-            double gamma, double eta, double kappa,
+            double alpha, double gamma, double eta, double kappa,
             double[] smoothingVariance4Levels, AbstractPicker picker) {
         this.model = model;
         this.numLevels = model.numLevels;
@@ -42,7 +42,7 @@ public class Modeler {
         this.data = dataSet.data;
 
         this.ncrpEstimator = new NCRPEstimator(gamma);
-        this.lmEstimator = new LMEstimator(eta, dataSet.id2Word.size());
+        this.lmEstimator = new LMEstimator(alpha, eta, dataSet.id2Word.size());
         this.gmEstimator = new GMEstimator(kappa);
 
         this.smoothingVariance4Levels = smoothingVariance4Levels;
@@ -143,6 +143,37 @@ public class Modeler {
     }
 
     public void estimateWordLevels(int docId) {
+        List<Integer> wordIds = data.get(docId).wordIds;
+        List<Integer> wordLevels = wordLevels4Documents.get(docId);
 
+        int[] levelCounts = new int[numLevels];
+        for (int wordIndex = 0; wordIndex < wordIds.size(); wordIndex++) {
+            int wordLevel = wordLevels.get(wordIndex);
+            levelCounts[wordLevel]++;
+        }
+
+        Node tempNode = leaf4Documents.get(docId);
+        Node[] tempPath = new Node[numLevels];
+        for (int level = numLevels - 1; level >= 0; level--) {
+            tempPath[level] = tempNode;
+            tempNode = tempNode.parent;
+        }
+
+        double[] levelWeights = new double[numLevels];
+        for (int wordIndex = 0; wordIndex < wordIds.size(); wordIndex++) {
+            int wordId = wordIds.get(wordIndex);
+            int wordLevel = wordLevels.get(wordIndex);
+            tempPath[wordLevel].removeWord(wordId);
+            levelCounts[wordLevel]--;
+
+            for (int level = 0; level < numLevels; level++) {
+                levelWeights[level] = lmEstimator.calculateLevelWeight(tempPath[level], levelCounts[level], wordId);
+            }
+
+            wordLevel = picker.pickLevel(levelWeights);
+
+            levelCounts[wordLevel]++;
+            tempPath[wordLevel].addWord(wordId);
+        }
     }
 }

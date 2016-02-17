@@ -9,11 +9,14 @@ import java.util.Map;
  * An estimator to calculate the probabilities for language modeling for the tree nodes.
  */
 public class LMEstimator {
+    // smoothing on topic distributions
+    double alpha;
     // smoothing on word distributions
     double eta;
     double etaSum;
 
-    public LMEstimator(double eta, int numWords) {
+    public LMEstimator(double alpha, double eta, int numWords) {
+        this.alpha = alpha;
         this.eta = eta;
         this.etaSum = eta * numWords;
     }
@@ -69,5 +72,11 @@ public class LMEstimator {
         }
 
         likelihoods.put(currentNode, oldProb + likelihoodOffset + languageLikelihood);
+    }
+
+    public double calculateLevelWeight(Node levelNode, int levelCount, int wordId) {
+        return (alpha + levelCount) *
+                (eta + levelNode.wordCounts.getOrDefault(wordId, 0)) /
+                (etaSum + levelNode.numWords);
     }
 }
