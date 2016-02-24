@@ -22,11 +22,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
-        <module name="HIGTOM" />
+        <module name="higtom" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="HIGTOM" target="1.5" />
+      <module name="higtom" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>
