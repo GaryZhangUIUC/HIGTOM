@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HIGTOM.iml" filepath="$PROJECT_DIR$/HIGTOM.iml" />
+      <module fileurl="file://$PROJECT_DIR$/higtom.iml" filepath="$PROJECT_DIR$/higtom.iml" />
     </modules>
   </component>
 </project>
