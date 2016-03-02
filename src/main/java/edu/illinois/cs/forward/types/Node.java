@@ -68,6 +68,7 @@ public class Node {
                     numCustomers;
             double newLatitudeMean = (location.latitude * (numCustomers - 1) + locationAdded.latitude) /
                     numCustomers;
+
             location.longitudeVariance = (location.longitudeVariance * (numCustomers - 1) +
                     (newLongitudeMean - location.longitude) * (newLongitudeMean - location.longitude) *
                             (numCustomers - 1) +
@@ -83,6 +84,10 @@ public class Node {
                             (numCustomers - 1) +
                     (locationAdded.latitude - newLatitudeMean) * (locationAdded.latitude - newLatitudeMean)) /
                     numCustomers;
+            if (location.latitudeVariance * location.longitudeVariance * 1.1 <
+                    location.longitudeLatitudeCovariance * location.longitudeLatitudeCovariance) {
+                System.err.println("Invalid covariance matrix.");
+            }
             location.longitude = newLongitudeMean;
             location.latitude = newLatitudeMean;
         }
@@ -97,6 +102,7 @@ public class Node {
                     numCustomers;
             double oldLatitudeMean = (location.latitude * (numCustomers + 1) - locationRemoved.latitude) /
                     numCustomers;
+
             location.longitudeVariance = (location.longitudeVariance * (numCustomers + 1) -
                     (oldLongitudeMean - location.longitude) * (oldLongitudeMean - location.longitude) * numCustomers -
                     (locationRemoved.longitude - location.longitude) *
@@ -112,6 +118,10 @@ public class Node {
                     (locationRemoved.latitude - location.latitude) *
                             (locationRemoved.latitude - location.latitude)) /
                     numCustomers;
+            if (location.latitudeVariance * location.longitudeVariance * 1.1 <
+                    location.longitudeLatitudeCovariance * location.longitudeLatitudeCovariance) {
+                System.err.println("Invalid covariance matrix.");
+            }
             location.longitude = oldLongitudeMean;
             location.latitude = oldLatitudeMean;
         }

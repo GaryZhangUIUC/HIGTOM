@@ -14,7 +14,7 @@ public class RandomPicker extends AbstractPicker {
 
     @Override
     public Node pickNode(Map<Node, Double> likelihoods) {
-        double max = -1.0;
+        double max = Double.NEGATIVE_INFINITY;
         for (double likelihood: likelihoods.values()) {
             max = Math.max(max, likelihood);
         }

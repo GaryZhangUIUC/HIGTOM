@@ -26,13 +26,11 @@ public class Modeler {
     public List<List<Integer>> wordLevels4Documents;
     public List<Node> leaf4Documents;
 
-    public double[] smoothingVariance4Levels;
-
     public AbstractPicker picker;
 
     public Modeler(
             Model model, DataSet dataSet,
-            double alpha, double gamma, double eta, double kappa,
+            double gamma, double alpha, double eta, double kappa,
             double[] smoothingVariance4Levels, AbstractPicker picker) {
         this.model = model;
         this.numLevels = model.numLevels;
@@ -43,9 +41,7 @@ public class Modeler {
 
         this.ncrpEstimator = new NCRPEstimator(gamma);
         this.lmEstimator = new LMEstimator(alpha, eta, dataSet.id2Word.size());
-        this.gmEstimator = new GMEstimator(kappa);
-
-        this.smoothingVariance4Levels = smoothingVariance4Levels;
+        this.gmEstimator = new GMEstimator(kappa, smoothingVariance4Levels);
 
         this.picker = picker;
 
@@ -117,9 +113,13 @@ public class Modeler {
 
         ncrpEstimator.updateLikelihoods(likelihoods, root);
         lmEstimator.updateLikelihoods(likelihoods, root, wordCounts4Levels);
-        gmEstimator.updateLikelihoodsChained(likelihoods, root, instance.location, smoothingVariance4Levels);
+        gmEstimator.updateLikelihoodsChained(likelihoods, root, instance.location);
 
         Node selectedNode = picker.pickNode(likelihoods);
+
+        if (selectedNode == null) {
+            System.err.println("Failed to select a node.");
+        }
 
         tempPath[selectedNode.level] = selectedNode;
         selectedNode.addCustomer();

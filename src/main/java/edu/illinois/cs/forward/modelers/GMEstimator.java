@@ -12,8 +12,11 @@ public class GMEstimator {
     // imaginary number of coming instances
     public double kappa;
 
-    public GMEstimator(double kappa) {
+    double[] smoothingVariance4Levels;
+
+    public GMEstimator(double kappa, double[] smoothingVariance4Levels) {
         this.kappa = kappa;
+        this.smoothingVariance4Levels = smoothingVariance4Levels;
     }
 
     /**
@@ -23,7 +26,7 @@ public class GMEstimator {
     public void updateLikelihoodsAbsolute(
             Map<Node, Double> likelihoods, Node root,
             Location target, double[] levelWeights,
-            double[] smoothingVariance4Levels, double uniformLikelihood) {
+            double uniformLikelihood) {
         double[] newLikelihoods = new double[levelWeights.length];
         newLikelihoods[levelWeights.length - 1] = 0.0;
         for (int level = levelWeights.length - 2; level >= 0; level--) {
@@ -31,13 +34,13 @@ public class GMEstimator {
         }
 
         updateLikelihoodsAbsolute(likelihoods, root, 0.0, target, levelWeights,
-                smoothingVariance4Levels, newLikelihoods);
+                newLikelihoods);
     }
 
     public void updateLikelihoodsAbsolute(
             Map<Node, Double> likelihoods, Node currentNode, double likelihoodOffset,
             Location target, double[] levelWeights,
-            double[] smoothingVariance4Levels, double[] newLikelihoods) {
+            double[] newLikelihoods) {
         double oldProb = likelihoods.getOrDefault(currentNode, 0.0);
 
         int level = currentNode.level;
@@ -51,7 +54,7 @@ public class GMEstimator {
             updateLikelihoodsAbsolute(
                     likelihoods, child, likelihoodOffset + geographicLikelihood,
                     target, levelWeights,
-                    smoothingVariance4Levels, newLikelihoods);
+                    newLikelihoods);
         }
 
         likelihoods.put(currentNode, oldProb + likelihoodOffset + geographicLikelihood + newLikelihoods[level]);
@@ -63,7 +66,7 @@ public class GMEstimator {
      */
     public void updateLikelihoodsChained(
             Map<Node, Double> likelihoods, Node root,
-            Location target, double[] smoothingVariance4Levels) {
+            Location target) {
         int numLevels = smoothingVariance4Levels.length;
         double[] newLikelihoods = new double[numLevels];
         newLikelihoods[numLevels - 1] = 0.0;
@@ -77,12 +80,12 @@ public class GMEstimator {
         }
 
 
-        updateLikelihoodsChained(likelihoods, root, 0.0, target, smoothingVariance4Levels, newLikelihoods);
+        updateLikelihoodsChained(likelihoods, root, 0.0, target, newLikelihoods);
     }
 
     public void updateLikelihoodsChained(
             Map<Node, Double> likelihoods, Node currentNode, double likelihoodOffset,
-            Location target, double[] smoothingVariance4Levels, double[] newLikelihoods) {
+            Location target, double[] newLikelihoods) {
         double oldProb = likelihoods.getOrDefault(currentNode, 0.0);
 
         int level = currentNode.level;
@@ -95,13 +98,17 @@ public class GMEstimator {
 
             updateLikelihoodsChained(
                     likelihoods, child, likelihoodOffset + geographicLikelihood,
-                    target, smoothingVariance4Levels, newLikelihoods);
+                    target, newLikelihoods);
         }
 
         double geographicProbability = smoothedGaussianProbability(
                 currentNode.location, currentNode.numCustomers, target, smoothingVariance4Levels[level]);
 
         double geographicLikelihood = Math.log(geographicProbability);
+
+        if (Double.isNaN(geographicLikelihood)) {
+            System.err.println("Encountered an NaN geographic probability.");
+        }
 
         likelihoods.put(currentNode, oldProb + likelihoodOffset + geographicLikelihood + newLikelihoods[level]);
     }
