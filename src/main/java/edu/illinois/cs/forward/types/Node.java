@@ -81,10 +81,6 @@ public class Node {
                             (numCustomers - 1) +
                     (locationAdded.latitude - newLatitudeMean) * (locationAdded.latitude - newLatitudeMean)) /
                     numCustomers;
-            if (location.latitudeVariance * location.longitudeVariance * 1.1 <
-                    location.longitudeLatitudeCovariance * location.longitudeLatitudeCovariance) {
-                System.err.println("Invalid covariance matrix.");
-            }
             location.longitude = newLongitudeMean;
             location.latitude = newLatitudeMean;
         }
@@ -106,23 +102,34 @@ public class Node {
                         (locationRemoved.longitude - location.longitude) *
                                 (locationRemoved.longitude - location.longitude)) /
                         numCustomers;
-                location.longitudeLatitudeCovariance = (location.longitudeLatitudeCovariance * (numCustomers + 1) -
-                        (oldLongitudeMean - location.longitude) * (oldLatitudeMean - location.latitude) * numCustomers -
-                        (locationRemoved.longitude - location.longitude) *
-                                (locationRemoved.latitude - location.latitude)) /
-                        numCustomers;
                 location.latitudeVariance = (location.latitudeVariance * (numCustomers + 1) -
                         (oldLatitudeMean - location.latitude) * (oldLatitudeMean - location.latitude) * numCustomers -
                         (locationRemoved.latitude - location.latitude) *
                                 (locationRemoved.latitude - location.latitude)) /
                         numCustomers;
-                if (location.latitudeVariance * location.longitudeVariance * 1.1 <
-                        location.longitudeLatitudeCovariance * location.longitudeLatitudeCovariance) {
-                    System.err.println("Invalid covariance matrix.");
+                boolean zeroLongitudeVariance = Math.abs(location.longitudeVariance) < Location.varianceFloatingError;
+                boolean zeroLatitudeVariance = Math.abs(location.latitudeVariance) < Location.varianceFloatingError;
+                if (zeroLongitudeVariance && zeroLatitudeVariance) {
+                    location.longitudeVariance = 0.0;
+                    location.latitudeVariance = 0.0;
+                    location.longitudeLatitudeCovariance = 0.0;
+                } else if (zeroLongitudeVariance) {
+                    location.longitudeVariance = 0.0;
+                    location.longitudeLatitudeCovariance = 0.0;
+                } else if (zeroLatitudeVariance) {
+                    location.latitudeVariance = 0.0;
+                    location.longitudeLatitudeCovariance = 0.0;
+                } else {
+                    location.longitudeLatitudeCovariance = (location.longitudeLatitudeCovariance * (numCustomers + 1) -
+                            (oldLongitudeMean - location.longitude) * (oldLatitudeMean - location.latitude) *
+                                    numCustomers -
+                            (locationRemoved.longitude - location.longitude) *
+                                    (locationRemoved.latitude - location.latitude)) /
+                            numCustomers;
                 }
             } else {
                 location.longitudeVariance = 0.0;
-                location.latitude = 0.0;
+                location.latitudeVariance = 0.0;
                 location.longitudeLatitudeCovariance = 0.0;
             }
 

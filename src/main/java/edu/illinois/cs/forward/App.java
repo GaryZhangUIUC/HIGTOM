@@ -27,7 +27,7 @@ public class App {
                 1.0, 10.0, 0.1, 10.0,
                 smoothingVariance4Levels, picker
         );
-        modeler.estimate(1);
+        modeler.estimate(2);
         System.out.println( "Good luck!" );
     }
 }
