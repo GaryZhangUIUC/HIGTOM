@@ -121,18 +121,18 @@ public class Modeler {
             System.err.println("Failed to select a node.");
         }
 
-        tempPath[selectedNode.level] = selectedNode;
         selectedNode.addCustomer();
         selectedNode.updateLocationAfterAdding(instance.location);
+        tempPath[selectedNode.level] = selectedNode;
         for (int level = selectedNode.level - 1; level >= 0; level--) {
-            tempNode = tempPath[level + 1].parent;
-            tempNode.addCustomer();
-            tempNode.updateLocationAfterAdding(instance.location);
+            tempPath[level] = tempPath[level + 1].parent;
+            tempPath[level].addCustomer();
+            tempPath[level].updateLocationAfterAdding(instance.location);
         }
         for (int level = selectedNode.level + 1; level < numLevels; level++) {
-            tempNode = tempPath[level - 1].addChild();
-            tempNode.addCustomer();
-            tempNode.updateLocationAfterAdding(instance.location);
+            tempPath[level] = tempPath[level - 1].addChild();
+            tempPath[level].addCustomer();
+            tempPath[level].updateLocationAfterAdding(instance.location);
         }
 
         for (int wordIndex = 0; wordIndex < wordIds.size(); wordIndex++) {
@@ -140,6 +140,8 @@ public class Modeler {
             int wordLevel = wordLevels.get(wordIndex);
             tempPath[wordLevel].addWord(wordId);
         }
+
+        leaf4Documents.set(docId, tempPath[numLevels - 1]);
     }
 
     public void estimateWordLevels(int docId) {
@@ -171,6 +173,7 @@ public class Modeler {
             }
 
             wordLevel = picker.pickLevel(levelWeights);
+            wordLevels.set(wordIndex, wordLevel);
 
             levelCounts[wordLevel]++;
             tempPath[wordLevel].addWord(wordId);

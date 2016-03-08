@@ -1,9 +1,6 @@
 package edu.illinois.cs.forward.types;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Representing an area in the hierarchical structure.
@@ -62,7 +59,7 @@ public class Node {
      */
     public void updateLocationAfterAdding(Location locationAdded) {
         if (location == null) {
-            location = locationAdded;
+            location = new Location(locationAdded.longitude, locationAdded.latitude);
         } else {
             double newLongitudeMean = (location.longitude * (numCustomers - 1) + locationAdded.longitude) /
                     numCustomers;
@@ -97,33 +94,42 @@ public class Node {
      * It's set to update the location after removing the customer.
      */
     public void updateLocationAfterRemoving(Location locationRemoved) {
-        if (numCustomers != 0) {
+        if (numCustomers > 0) {
             double oldLongitudeMean = (location.longitude * (numCustomers + 1) - locationRemoved.longitude) /
                     numCustomers;
             double oldLatitudeMean = (location.latitude * (numCustomers + 1) - locationRemoved.latitude) /
                     numCustomers;
 
-            location.longitudeVariance = (location.longitudeVariance * (numCustomers + 1) -
-                    (oldLongitudeMean - location.longitude) * (oldLongitudeMean - location.longitude) * numCustomers -
-                    (locationRemoved.longitude - location.longitude) *
-                            (locationRemoved.longitude - location.longitude)) /
-                    numCustomers;
-            location.longitudeLatitudeCovariance = (location.longitudeLatitudeCovariance * (numCustomers + 1) -
-                    (oldLongitudeMean - location.longitude) * (oldLatitudeMean - location.latitude) * numCustomers -
-                    (locationRemoved.longitude - location.longitude) *
-                            (locationRemoved.latitude - location.latitude)) /
-                    numCustomers;
-            location.latitudeVariance = (location.latitudeVariance * (numCustomers + 1) -
-                    (oldLatitudeMean - location.latitude) * (oldLatitudeMean - location.latitude) * numCustomers -
-                    (locationRemoved.latitude - location.latitude) *
-                            (locationRemoved.latitude - location.latitude)) /
-                    numCustomers;
-            if (location.latitudeVariance * location.longitudeVariance * 1.1 <
-                    location.longitudeLatitudeCovariance * location.longitudeLatitudeCovariance) {
-                System.err.println("Invalid covariance matrix.");
+            if (numCustomers > 1) {
+                location.longitudeVariance = (location.longitudeVariance * (numCustomers + 1) -
+                        (oldLongitudeMean - location.longitude) * (oldLongitudeMean - location.longitude) * numCustomers -
+                        (locationRemoved.longitude - location.longitude) *
+                                (locationRemoved.longitude - location.longitude)) /
+                        numCustomers;
+                location.longitudeLatitudeCovariance = (location.longitudeLatitudeCovariance * (numCustomers + 1) -
+                        (oldLongitudeMean - location.longitude) * (oldLatitudeMean - location.latitude) * numCustomers -
+                        (locationRemoved.longitude - location.longitude) *
+                                (locationRemoved.latitude - location.latitude)) /
+                        numCustomers;
+                location.latitudeVariance = (location.latitudeVariance * (numCustomers + 1) -
+                        (oldLatitudeMean - location.latitude) * (oldLatitudeMean - location.latitude) * numCustomers -
+                        (locationRemoved.latitude - location.latitude) *
+                                (locationRemoved.latitude - location.latitude)) /
+                        numCustomers;
+                if (location.latitudeVariance * location.longitudeVariance * 1.1 <
+                        location.longitudeLatitudeCovariance * location.longitudeLatitudeCovariance) {
+                    System.err.println("Invalid covariance matrix.");
+                }
+            } else {
+                location.longitudeVariance = 0.0;
+                location.latitude = 0.0;
+                location.longitudeLatitudeCovariance = 0.0;
             }
+
             location.longitude = oldLongitudeMean;
             location.latitude = oldLatitudeMean;
+        } else {
+            location = null;
         }
     }
 
