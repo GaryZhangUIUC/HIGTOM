@@ -20,14 +20,15 @@ public class App {
         DataSet dataSet = importer.getDataSet(new HashMap<String, Integer>(), new HashMap<Integer, String>());
 
         Model model = new Model(3);
-        double[] smoothingVariance4Levels = {0.001, 0.0003, 0.0001};
+        model.setWordProfile(dataSet.word2Id, dataSet.id2Word);
+        double[] smoothingVariance4Levels = {1e-4, 1e-5, 1e-6};
         AbstractPicker picker = new RandomPicker();
         Modeler modeler = new Modeler(
                 model, dataSet,
                 1.0, 10.0, 0.1, 10.0,
                 smoothingVariance4Levels, picker
         );
-        modeler.estimate(2);
+        modeler.estimate(10);
         System.out.println( "Good luck!" );
     }
 }

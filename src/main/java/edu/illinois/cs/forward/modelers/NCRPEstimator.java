@@ -40,14 +40,14 @@ public class NCRPEstimator {
         }
     }
 
-    public Node selectNodeChild(Node parent, Random random) {
-        double randomNum = random.nextDouble();
+    public void updateChildLikelihoods(Node parent, Map<Node, Double> childLikelihoods) {
         for (Node child: parent.children) {
-            randomNum -= (double)child.numCustomers / (gamma + parent.numCustomers);
-            if (randomNum < 0) {
-                return child;
-            }
+            double oldLikelihood = childLikelihoods.getOrDefault(child, 0.0);
+            double ncrpProbability = (double)child.numCustomers / (gamma + parent.numCustomers);
+            childLikelihoods.put(child, oldLikelihood + Math.log(ncrpProbability));
         }
-        return parent.addChild();
+        double oldLikelihood = childLikelihoods.getOrDefault(null, 0.0);
+        double ncrpProbability = gamma / (gamma + parent.numCustomers);
+        childLikelihoods.put(null, oldLikelihood + Math.log(ncrpProbability));
     }
 }

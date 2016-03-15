@@ -19,6 +19,25 @@ public class GMEstimator {
         this.smoothingVariance4Levels = smoothingVariance4Levels;
     }
 
+    public void updateChildLikelihoods(
+            Node parent, Map<Node, Double> childLikelihoods,
+            Location target, int level) {
+        for (Node child: parent.children) {
+            double oldLikelihood = childLikelihoods.getOrDefault(child, 0.0);
+            double geographicProbability = smoothedGaussianProbability(
+                    child.location, child.numCustomers, target, smoothingVariance4Levels[level]);
+            childLikelihoods.put(
+                    child,
+                    oldLikelihood + Math.log(geographicProbability));
+        }
+        double oldLikelihood = childLikelihoods.getOrDefault(null, 0.0);
+        double geographicProbability = smoothedGaussianProbability(
+                target, 0, target, smoothingVariance4Levels[level]);
+        childLikelihoods.put(
+                null,
+                oldLikelihood + Math.log(geographicProbability));
+    }
+
     /**
      * Estimate the geographical probabilities and update in place the likelihoods for the tree nodes.
      * This is the absolute probability way.
@@ -72,7 +91,7 @@ public class GMEstimator {
         newLikelihoods[numLevels - 1] = 0.0;
         for (int level = numLevels - 2; level >= 0; level--) {
             double geographicProbability = smoothedGaussianProbability(
-                    target, 1, target, smoothingVariance4Levels[level + 1]);
+                    target, 0, target, smoothingVariance4Levels[level + 1]);
 
             double geographicLikelihood = Math.log(geographicProbability);
 

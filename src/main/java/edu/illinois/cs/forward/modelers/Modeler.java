@@ -54,7 +54,7 @@ public class Modeler {
             root.addCustomer();
             root.updateLocationAfterAdding(instance.location);
             for (int pathIndex = 1; pathIndex < numLevels; pathIndex++) {
-                Node nextNode = ncrpEstimator.selectNodeChild(tempPath[pathIndex - 1], random);
+                Node nextNode = selectChildNode(tempPath[pathIndex - 1], instance);
                 nextNode.addCustomer();
                 nextNode.updateLocationAfterAdding(instance.location);
                 tempPath[pathIndex] = nextNode;
@@ -72,8 +72,22 @@ public class Modeler {
         }
     }
 
+    public Node selectChildNode(Node parent, Instance instance) {
+        Map<Node, Double> childLikelihoods = new HashMap<>();
+        ncrpEstimator.updateChildLikelihoods(parent, childLikelihoods);
+        gmEstimator.updateChildLikelihoods(parent, childLikelihoods, instance.location, parent.level + 1);
+
+        Node selectedChild = picker.pickNode(childLikelihoods);
+        if (selectedChild == null) {
+            return parent.addChild();
+        } else {
+            return selectedChild;
+        }
+    }
+
     public void estimate(int numIterations) {
         for (int iteration = 1; iteration <= numIterations; iteration++) {
+            System.out.println("Running iteration number " + iteration + " out of " + numIterations);
             for (int docId = 0; docId < data.size(); docId++) {
                 estimatePath(docId);
             }
