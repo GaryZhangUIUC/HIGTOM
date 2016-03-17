@@ -144,24 +144,23 @@ public class GMEstimator {
         double smoothingVariance = smoothingVariance4Levels[level];
         double longitudeVariance = (source.longitudeVariance * numSourceInstances + smoothingVariance * kappa) /
                 (numSourceInstances + kappa);
+        double longitudeSd = Math.sqrt(longitudeVariance);
         double latitudeVariance = (source.latitudeVariance * numSourceInstances + smoothingVariance * kappa) /
                 (numSourceInstances + kappa);
+        double latitudeSd = Math.sqrt(latitudeVariance);
         double longitudeLatitudeCorrelation = source.longitudeLatitudeCovariance * numSourceInstances /
-                (numSourceInstances + kappa) / Math.sqrt(longitudeVariance * latitudeVariance);
+                (numSourceInstances + kappa) / (longitudeSd * latitudeSd);
 
-        double normalizedDeviation =
-                (target.longitude - source.longitude) * (target.longitude - source.longitude) /
-                        longitudeVariance +
-                (target.latitude - source.latitude) * (target.latitude - source.latitude) /
-                        latitudeVariance -
-                2 * longitudeLatitudeCorrelation *
-                        (target.longitude - source.longitude) * (target.latitude - source.latitude) /
-                        Math.sqrt(longitudeVariance * latitudeVariance);
+        double longitudeDeviation = target.longitude - source.longitude;
+        double latitudeDeviation = target.latitude - source.latitude;
+        double normalizedDeviation = longitudeDeviation * longitudeDeviation / longitudeVariance +
+                latitudeDeviation * latitudeDeviation / latitudeVariance -
+                2 * longitudeLatitudeCorrelation * longitudeDeviation * latitudeDeviation /
+                        (longitudeSd * latitudeSd);
         double exponentialPower = -normalizedDeviation /
                 (2.0 * (1 - longitudeLatitudeCorrelation * longitudeLatitudeCorrelation));
-        return Math.exp(exponentialPower) / (2 * Math.PI) /
-                Math.sqrt(longitudeVariance * latitudeVariance *
-                        (1 - longitudeLatitudeCorrelation * longitudeLatitudeCorrelation));
+        return Math.exp(exponentialPower) / (2 * Math.PI) / (longitudeSd * latitudeSd) /
+                Math.sqrt(1 - longitudeLatitudeCorrelation * longitudeLatitudeCorrelation);
     }
 
     public double uniformProbability(int level) {
