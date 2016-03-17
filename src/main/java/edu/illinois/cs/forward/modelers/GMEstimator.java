@@ -11,28 +11,30 @@ import java.util.Map;
 public class GMEstimator {
     // imaginary number of coming instances
     public double kappa;
-
     double[] smoothingVariance4Levels;
 
-    public GMEstimator(double kappa, double[] smoothingVariance4Levels) {
+    double boundaryFactor;
+
+    public GMEstimator(double kappa, double[] smoothingVariance4Levels, double boundaryFactor) {
         this.kappa = kappa;
         this.smoothingVariance4Levels = smoothingVariance4Levels;
+        this.boundaryFactor = boundaryFactor;
     }
 
     public void updateChildLikelihoods(
             Node parent, Map<Node, Double> childLikelihoods,
-            Location target, int level) {
+            Location target) {
+        int childLevel = parent.level + 1;
         for (Node child: parent.children) {
             double oldLikelihood = childLikelihoods.getOrDefault(child, 0.0);
             double geographicProbability = smoothedGaussianProbability(
-                    child.location, child.numCustomers, target, smoothingVariance4Levels[level]);
+                    child.location, child.numCustomers, target, childLevel);
             childLikelihoods.put(
                     child,
                     oldLikelihood + Math.log(geographicProbability));
         }
         double oldLikelihood = childLikelihoods.getOrDefault(null, 0.0);
-        double geographicProbability = smoothedGaussianProbability(
-                target, 0, target, smoothingVariance4Levels[level]);
+        double geographicProbability = uniformProbability(childLevel);
         childLikelihoods.put(
                 null,
                 oldLikelihood + Math.log(geographicProbability));
@@ -44,12 +46,13 @@ public class GMEstimator {
      */
     public void updateLikelihoodsAbsolute(
             Map<Node, Double> likelihoods, Node root,
-            Location target, double[] levelWeights,
-            double uniformLikelihood) {
+            Location target, double[] levelWeights) {
         double[] newLikelihoods = new double[levelWeights.length];
         newLikelihoods[levelWeights.length - 1] = 0.0;
         for (int level = levelWeights.length - 2; level >= 0; level--) {
-            newLikelihoods[level] = newLikelihoods[level + 1] + levelWeights[level + 1] * uniformLikelihood;
+            double geographicProbability = uniformProbability(level + 1);
+            double geographicLikelihood = Math.log(geographicProbability);
+            newLikelihoods[level] = newLikelihoods[level + 1] + levelWeights[level + 1] * geographicLikelihood;
         }
 
         updateLikelihoodsAbsolute(likelihoods, root, 0.0, target, levelWeights,
@@ -65,7 +68,7 @@ public class GMEstimator {
         int level = currentNode.level;
 
         double geographicProbability = smoothedGaussianProbability(
-                currentNode.location, currentNode.numCustomers, target, smoothingVariance4Levels[level]);
+                currentNode.location, currentNode.numCustomers, target, level);
 
         double geographicLikelihood = levelWeights[currentNode.level] * Math.log(geographicProbability);
 
@@ -90,8 +93,7 @@ public class GMEstimator {
         double[] newLikelihoods = new double[numLevels];
         newLikelihoods[numLevels - 1] = 0.0;
         for (int level = numLevels - 2; level >= 0; level--) {
-            double geographicProbability = smoothedGaussianProbability(
-                    target, 0, target, smoothingVariance4Levels[level + 1]);
+            double geographicProbability = uniformProbability(level + 1);
 
             double geographicLikelihood = Math.log(geographicProbability);
 
@@ -111,7 +113,7 @@ public class GMEstimator {
 
         for (Node child: currentNode.children) {
             double geographicProbability = smoothedGaussianProbability(
-                    currentNode.location, currentNode.numCustomers, child.location, smoothingVariance4Levels[level]);
+                    currentNode.location, currentNode.numCustomers, child.location, level);
 
             double geographicLikelihood = Math.log(geographicProbability);
 
@@ -121,7 +123,7 @@ public class GMEstimator {
         }
 
         double geographicProbability = smoothedGaussianProbability(
-                currentNode.location, currentNode.numCustomers, target, smoothingVariance4Levels[level]);
+                currentNode.location, currentNode.numCustomers, target, level);
 
         double geographicLikelihood = Math.log(geographicProbability);
 
@@ -138,7 +140,8 @@ public class GMEstimator {
      */
     public double smoothedGaussianProbability(
             Location source, int numSourceInstances,
-            Location target, double smoothingVariance) {
+            Location target, int level) {
+        double smoothingVariance = smoothingVariance4Levels[level];
         double longitudeVariance = (source.longitudeVariance * numSourceInstances + smoothingVariance * kappa) /
                 (numSourceInstances + kappa);
         double latitudeVariance = (source.latitudeVariance * numSourceInstances + smoothingVariance * kappa) /
@@ -159,5 +162,9 @@ public class GMEstimator {
         return Math.exp(exponentialPower) / (2 * Math.PI) /
                 Math.sqrt(longitudeVariance * latitudeVariance *
                         (1 - longitudeLatitudeCorrelation * longitudeLatitudeCorrelation));
+    }
+
+    public double uniformProbability(int level) {
+        return 0.25 / (boundaryFactor * boundaryFactor * smoothingVariance4Levels[level]);
     }
 }

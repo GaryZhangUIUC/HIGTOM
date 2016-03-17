@@ -30,8 +30,9 @@ public class Modeler {
 
     public Modeler(
             Model model, DataSet dataSet,
-            double gamma, double alpha, double eta, double kappa,
-            double[] smoothingVariance4Levels, AbstractPicker picker) {
+            double ncrpGamma, double lmAlpha, double lmEta,
+            double gmKappa, double[] gmSmoothingVariance4Levels, double gmBoundaryFactor,
+            AbstractPicker picker) {
         this.model = model;
         this.numLevels = model.numLevels;
         this.root = model.root;
@@ -39,14 +40,14 @@ public class Modeler {
         this.dataSet = dataSet;
         this.data = dataSet.data;
 
-        this.ncrpEstimator = new NCRPEstimator(gamma);
-        this.lmEstimator = new LMEstimator(alpha, eta, dataSet.id2Word.size());
-        this.gmEstimator = new GMEstimator(kappa, smoothingVariance4Levels);
+        this.ncrpEstimator = new NCRPEstimator(ncrpGamma);
+        this.lmEstimator = new LMEstimator(lmAlpha, lmEta, dataSet.id2Word.size());
+        this.gmEstimator = new GMEstimator(gmKappa, gmSmoothingVariance4Levels, gmBoundaryFactor);
 
         this.picker = picker;
 
-        wordLevels4Documents = new ArrayList<List<Integer>>();
-        leaf4Documents = new ArrayList<Node>();
+        wordLevels4Documents = new ArrayList<>();
+        leaf4Documents = new ArrayList<>();
         Random random = new Random();
         Node[] tempPath = new Node[numLevels];
         for (Instance instance : data) {
@@ -62,7 +63,7 @@ public class Modeler {
             leaf4Documents.add(tempPath[numLevels - 1]);
 
             List<Integer> wordIds = instance.wordIds;
-            List<Integer> wordLevels = new ArrayList<Integer>();
+            List<Integer> wordLevels = new ArrayList<>();
             for (Integer wordId : wordIds) {
                 int randomLevel = random.nextInt(numLevels);
                 wordLevels.add(randomLevel);
@@ -75,7 +76,7 @@ public class Modeler {
     public Node selectChildNode(Node parent, Instance instance) {
         Map<Node, Double> childLikelihoods = new HashMap<>();
         ncrpEstimator.updateChildLikelihoods(parent, childLikelihoods);
-        gmEstimator.updateChildLikelihoods(parent, childLikelihoods, instance.location, parent.level + 1);
+        gmEstimator.updateChildLikelihoods(parent, childLikelihoods, instance.location);
 
         Node selectedChild = picker.pickNode(childLikelihoods);
         if (selectedChild == null) {
@@ -110,9 +111,9 @@ public class Modeler {
         }
         List<Integer> wordIds = instance.wordIds;
         List<Integer> wordLevels = wordLevels4Documents.get(docId);
-        List<Map<Integer, Integer>> wordCounts4Levels = new ArrayList<Map<Integer, Integer>>();
+        List<Map<Integer, Integer>> wordCounts4Levels = new ArrayList<>();
         for (int level = 0; level < numLevels; level++) {
-            wordCounts4Levels.add(new HashMap<Integer, Integer>());
+            wordCounts4Levels.add(new HashMap<>());
         }
         for (int wordIndex = 0; wordIndex < wordIds.size(); wordIndex++) {
             int wordId = wordIds.get(wordIndex);
@@ -123,7 +124,7 @@ public class Modeler {
             tempPath[wordLevel].removeWord(wordId);
         }
 
-        Map<Node, Double> likelihoods = new HashMap<Node, Double>();
+        Map<Node, Double> likelihoods = new HashMap<>();
 
         ncrpEstimator.updateLikelihoods(likelihoods, root);
         lmEstimator.updateLikelihoods(likelihoods, root, wordCounts4Levels);

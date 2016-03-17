@@ -17,7 +17,7 @@ public class App {
     public static void main( String[] args ) {
         TwitterJsonImporter importer = new TwitterJsonImporter(
                 "src/main/resources/chicago75000s.txt", "src/main/resources/stopwords.txt");
-        DataSet dataSet = importer.getDataSet(new HashMap<String, Integer>(), new HashMap<Integer, String>());
+        DataSet dataSet = importer.getDataSet(new HashMap<>(), new HashMap<>());
 
         Model model = new Model(3);
         model.setWordProfile(dataSet.word2Id, dataSet.id2Word);
@@ -25,8 +25,9 @@ public class App {
         AbstractPicker picker = new RandomPicker();
         Modeler modeler = new Modeler(
                 model, dataSet,
-                1.0, 10.0, 0.1, 10.0,
-                smoothingVariance4Levels, picker
+                1.0, 10.0, 0.1,
+                10.0, smoothingVariance4Levels, 3.0,
+                picker
         );
         modeler.estimate(10);
         System.out.println( "Good luck!" );
