@@ -11,14 +11,16 @@ import java.util.Map;
 public class GMEstimator {
     // imaginary number of coming instances
     public double kappa;
-    double[] smoothingVariance4Levels;
+    // used in smoothing variances as well as calculating the region for uniform distribution
+    double[] defaultVariance4Levels;
+    // defines how large the region, which is this multiplier times the default sd,
+    // for the uniform distribution used when there is no instance in a node
+    double uniformRegionMultiplier;
 
-    double boundaryFactor;
-
-    public GMEstimator(double kappa, double[] smoothingVariance4Levels, double boundaryFactor) {
+    public GMEstimator(double kappa, double[] defaultVariance4Levels, double uniformRegionMultiplier) {
         this.kappa = kappa;
-        this.smoothingVariance4Levels = smoothingVariance4Levels;
-        this.boundaryFactor = boundaryFactor;
+        this.defaultVariance4Levels = defaultVariance4Levels;
+        this.uniformRegionMultiplier = uniformRegionMultiplier;
     }
 
     public void updateChildLikelihoods(
@@ -89,7 +91,7 @@ public class GMEstimator {
     public void updateLikelihoodsChained(
             Map<Node, Double> likelihoods, Node root,
             Location target) {
-        int numLevels = smoothingVariance4Levels.length;
+        int numLevels = defaultVariance4Levels.length;
         double[] newLikelihoods = new double[numLevels];
         newLikelihoods[numLevels - 1] = 0.0;
         for (int level = numLevels - 2; level >= 0; level--) {
@@ -141,7 +143,7 @@ public class GMEstimator {
     public double smoothedGaussianProbability(
             Location source, int numSourceInstances,
             Location target, int level) {
-        double smoothingVariance = smoothingVariance4Levels[level];
+        double smoothingVariance = defaultVariance4Levels[level];
         double longitudeVariance = (source.longitudeVariance * numSourceInstances + smoothingVariance * kappa) /
                 (numSourceInstances + kappa);
         double longitudeSd = Math.sqrt(longitudeVariance);
@@ -153,6 +155,7 @@ public class GMEstimator {
 
         double longitudeDeviation = target.longitude - source.longitude;
         double latitudeDeviation = target.latitude - source.latitude;
+
         double normalizedDeviation = longitudeDeviation * longitudeDeviation / longitudeVariance +
                 latitudeDeviation * latitudeDeviation / latitudeVariance -
                 2 * longitudeLatitudeCorrelation * longitudeDeviation * latitudeDeviation /
@@ -164,6 +167,6 @@ public class GMEstimator {
     }
 
     public double uniformProbability(int level) {
-        return 0.25 / (boundaryFactor * boundaryFactor * smoothingVariance4Levels[level]);
+        return 0.25 / (uniformRegionMultiplier * uniformRegionMultiplier * defaultVariance4Levels[level]);
     }
 }

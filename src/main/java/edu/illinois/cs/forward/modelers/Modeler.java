@@ -28,10 +28,22 @@ public class Modeler {
 
     public AbstractPicker picker;
 
+    /**
+     * Create a modeler to calculate the model.
+     * @param model the old model.
+     * @param dataSet the incoming data set.
+     * @param ncrpGamma the imaginary number of coming customers to the new table.
+     * @param lmAlpha the imaginary count for every level.
+     * @param lmEta the imaginary count for every word.
+     * @param gmKappa the imaginary number of instances with the default variance.
+     * @param gmDefaultVariance4Levels the default variances for all the levels.
+     * @param gmUniformRegionMultiplier the multiplier used to calculate the uniform distribution region.
+     * @param picker the picker to pick up a node given a node-to-likelihood map.
+     */
     public Modeler(
             Model model, DataSet dataSet,
             double ncrpGamma, double lmAlpha, double lmEta,
-            double gmKappa, double[] gmSmoothingVariance4Levels, double gmBoundaryFactor,
+            double gmKappa, double[] gmDefaultVariance4Levels, double gmUniformRegionMultiplier,
             AbstractPicker picker) {
         this.model = model;
         this.numLevels = model.numLevels;
@@ -42,7 +54,7 @@ public class Modeler {
 
         this.ncrpEstimator = new NCRPEstimator(ncrpGamma);
         this.lmEstimator = new LMEstimator(lmAlpha, lmEta, dataSet.id2Word.size());
-        this.gmEstimator = new GMEstimator(gmKappa, gmSmoothingVariance4Levels, gmBoundaryFactor);
+        this.gmEstimator = new GMEstimator(gmKappa, gmDefaultVariance4Levels, gmUniformRegionMultiplier);
 
         this.picker = picker;
 
