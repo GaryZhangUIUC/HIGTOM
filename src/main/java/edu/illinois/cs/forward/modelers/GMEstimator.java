@@ -10,17 +10,17 @@ import java.util.Map;
  */
 public class GMEstimator {
     // imaginary number of coming instances
-    public double kappa;
+    double kappa;
     // used in smoothing variances as well as calculating the region for uniform distribution
     double[] defaultVariance4Levels;
     // defines how large the region, which is this multiplier times the default sd,
     // for the uniform distribution used when there is no instance in a node
-    double uniformRegionMultiplier;
+    double newAreaDiscountFactor;
 
-    public GMEstimator(double kappa, double[] defaultVariance4Levels, double uniformRegionMultiplier) {
+    public GMEstimator(double kappa, double[] defaultVariance4Levels, double newAreaDiscountFactor) {
         this.kappa = kappa;
         this.defaultVariance4Levels = defaultVariance4Levels;
-        this.uniformRegionMultiplier = uniformRegionMultiplier;
+        this.newAreaDiscountFactor = newAreaDiscountFactor;
     }
 
     public void updateChildLikelihoods(
@@ -167,6 +167,6 @@ public class GMEstimator {
     }
 
     public double uniformProbability(int level) {
-        return 0.25 / (uniformRegionMultiplier * uniformRegionMultiplier * defaultVariance4Levels[level]);
+        return 1.0 / (Math.PI * newAreaDiscountFactor * defaultVariance4Levels[level]);
     }
 }

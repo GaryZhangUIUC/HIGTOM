@@ -10,7 +10,7 @@ import java.util.Random;
  */
 public class NCRPEstimator {
     // "imaginary" customers for estimating opening a new table
-    public double gamma;
+    double gamma;
 
     public NCRPEstimator(double gamma) {
         this.gamma = gamma;
