@@ -3,6 +3,7 @@ package edu.illinois.cs.forward;
 import edu.illinois.cs.forward.importers.TwitterJsonImporter;
 import edu.illinois.cs.forward.modelers.Modeler;
 import edu.illinois.cs.forward.modelers.picker.AbstractPicker;
+import edu.illinois.cs.forward.modelers.picker.MaximumPicker;
 import edu.illinois.cs.forward.modelers.picker.RandomPicker;
 import edu.illinois.cs.forward.types.DataSet;
 import edu.illinois.cs.forward.types.Model;
@@ -22,15 +23,15 @@ public class App {
         Model model = new Model(3);
         model.setWordProfile(dataSet.word2Id, dataSet.id2Word);
         double[] smoothingVariance4Levels = {1e-4, 1e-5, 1e-6};
-        AbstractPicker picker = new RandomPicker();
+        AbstractPicker pathPicker = new MaximumPicker();
+        AbstractPicker levelPicker = new RandomPicker();
         Modeler modeler = new Modeler(
                 model, dataSet,
                 0.1, 10.0, 0.1,
                 10.0, smoothingVariance4Levels, 9.0,
-                picker
+                pathPicker, levelPicker
         );
-        modeler.estimate(1);
-        System.out.println( "Good luck!" );
-        model.outputToJSON("src/main/resources/model.json", 10, 2);
+        modeler.estimate(20);
+        model.outputToJSON("src/main/resources/model.json", 20, 10, 1.0);
     }
 }

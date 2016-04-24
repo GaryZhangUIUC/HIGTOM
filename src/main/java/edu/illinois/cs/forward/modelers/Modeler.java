@@ -26,7 +26,8 @@ public class Modeler {
     public List<List<Integer>> wordLevels4Documents;
     public List<Node> leaf4Documents;
 
-    public AbstractPicker picker;
+    public AbstractPicker pathPicker;
+    public AbstractPicker levelPicker;
 
     /**
      * Create a modeler to calculate the model.
@@ -38,13 +39,14 @@ public class Modeler {
      * @param gmKappa the imaginary number of instances with the default variance.
      * @param gmDefaultVariance4Levels the default variances for all the levels.
      * @param gmNewAreaDiscountFactor the discount factor used to discount the geographic probability of new areas.
-     * @param picker the picker to pick up a node given a node-to-likelihood map.
+     * @param pathPicker the picker to pick up a path given a path-to-likelihood map.
+     * @param levelPicker the picker to pick up a level given a level-to-likelihood map.
      */
     public Modeler(
             Model model, DataSet dataSet,
             double ncrpGamma, double lmAlpha, double lmEta,
             double gmKappa, double[] gmDefaultVariance4Levels, double gmNewAreaDiscountFactor,
-            AbstractPicker picker) {
+            AbstractPicker pathPicker, AbstractPicker levelPicker) {
         this.model = model;
         this.numLevels = model.numLevels;
         this.root = model.root;
@@ -56,7 +58,8 @@ public class Modeler {
         this.lmEstimator = new LMEstimator(lmAlpha, lmEta, dataSet.id2Word.size());
         this.gmEstimator = new GMEstimator(gmKappa, gmDefaultVariance4Levels, gmNewAreaDiscountFactor);
 
-        this.picker = picker;
+        this.pathPicker = pathPicker;
+        this.levelPicker = levelPicker;
 
         wordLevels4Documents = new ArrayList<>();
         leaf4Documents = new ArrayList<>();
@@ -90,7 +93,7 @@ public class Modeler {
         ncrpEstimator.updateChildLikelihoods(parent, childLikelihoods);
         gmEstimator.updateChildLikelihoods(parent, childLikelihoods, instance.location);
 
-        Node selectedChild = picker.pickNode(childLikelihoods);
+        Node selectedChild = pathPicker.pickNode(childLikelihoods);
         if (selectedChild == null) {
             return parent.addChild();
         } else {
@@ -142,7 +145,7 @@ public class Modeler {
         lmEstimator.updateLikelihoods(likelihoods, root, wordCounts4Levels);
         gmEstimator.updateLikelihoodsChained(likelihoods, root, instance.location);
 
-        Node selectedNode = picker.pickNode(likelihoods);
+        Node selectedNode = pathPicker.pickNode(likelihoods);
 
         if (selectedNode == null) {
             System.err.println("Failed to select a node.");
@@ -199,7 +202,7 @@ public class Modeler {
                 levelWeights[level] = lmEstimator.calculateLevelWeight(tempPath[level], levelCounts[level], wordId);
             }
 
-            wordLevel = picker.pickLevel(levelWeights);
+            wordLevel = levelPicker.pickLevel(levelWeights);
             wordLevels.set(wordIndex, wordLevel);
 
             levelCounts[wordLevel]++;

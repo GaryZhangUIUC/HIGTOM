@@ -36,7 +36,7 @@ public class Model implements Serializable {
         this.id2Word = id2Word;
     }
 
-    public void outputToJSON(String filePath, int numTopWords, double boundaryFactor) {
+    public void outputToJSON(String filePath, int minimumPopularity, int numTopWords, double boundaryFactor) {
         System.out.println("Writing down the model...");
 
         JSONObject featureCollection = new JSONObject();
@@ -47,12 +47,15 @@ public class Model implements Serializable {
         nodeQueue.offer(root);
         while (!nodeQueue.isEmpty()) {
             Node currentNode = nodeQueue.poll();
+            if (currentNode.numCustomers < minimumPopularity) {
+                continue;
+            }
             JSONObject feature = new JSONObject();
             feature.put("type", "Feature");
             feature.put("id", currentNode.hashCode());
 
             JSONObject properties = new JSONObject();
-            properties.put("level", currentNode.level);
+            properties.put("level", currentNode.level + 1);
             properties.put("num_documents", currentNode.numCustomers);
 
             if (currentNode.parent != null) {
