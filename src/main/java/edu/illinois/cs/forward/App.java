@@ -29,7 +29,8 @@ public class App {
                 10.0, smoothingVariance4Levels, 9.0,
                 picker
         );
-        modeler.estimate(10);
+        modeler.estimate(1);
         System.out.println( "Good luck!" );
+        model.outputToJSON("src/main/resources/model.json", 10, 2);
     }
 }

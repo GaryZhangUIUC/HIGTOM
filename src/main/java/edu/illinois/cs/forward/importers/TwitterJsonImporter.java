@@ -30,7 +30,7 @@ public class TwitterJsonImporter extends AbstractImporter {
 
     @Override
     public DataSet getDataSet(Map<String, Integer> word2Id, Map<Integer, String> id2Word) {
-        List<Instance> data = new ArrayList<Instance>();
+        List<Instance> data = new ArrayList<>();
 
         Set<String> stopWords = getStopWords();
 
