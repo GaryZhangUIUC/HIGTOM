@@ -32,6 +32,6 @@ public class App {
                 pathPicker, levelPicker
         );
         modeler.estimate(20);
-        model.outputToJSON("src/main/resources/model.json", 20, 10, 1.0);
+        model.outputToJSON("src/main/resources/model.json", 10, 1.0);
     }
 }
