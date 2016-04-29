@@ -40,7 +40,8 @@ public class App {
                 writer.write(value + "");
                 writer.write(",");
             }
-
+            writer.write("\t");
+            writer.write(String.valueOf(n.location.latitudeVariance) + " " + String.valueOf(n.location.longitudeVariance));
             writer.write("\n");
         }
         catch (IOException ex) {
