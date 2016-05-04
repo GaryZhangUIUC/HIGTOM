@@ -22,16 +22,16 @@ public class App {
 
         Model model = new Model(3);
         model.setWordProfile(dataSet.word2Id, dataSet.id2Word);
-        double[] smoothingVariance4Levels = {1e-4, 1e-5, 1e-6};
-        AbstractPicker pathPicker = new MaximumPicker();
+        double[] smoothingVariance4Levels = {1e-3, 1e-6, 1e-7};
+        AbstractPicker pathPicker = new RandomPicker();
         AbstractPicker levelPicker = new RandomPicker();
         Modeler modeler = new Modeler(
                 model, dataSet,
-                0.1, 10.0, 0.1,
+                0.01, 10.0, 0.1,
                 10.0, smoothingVariance4Levels, 9.0,
                 pathPicker, levelPicker
         );
-        modeler.estimate(20);
+        modeler.estimate(10);
         model.outputToJSON("src/main/resources/model.json", 10, 1.0);
     }
 }

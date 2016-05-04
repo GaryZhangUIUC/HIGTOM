@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+      #map {
+        margin: 0 0 0 15%;
+        height: 100%;
+      }
+      #profile_bar {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: auto;
+        width: 15%;
+        position: fixed;
+      }
+      h3 {
+        margin: 0;
+        padding: 10px 0;
+        text-align: center;
+        color: #ffffff;
+        background-color: #0000ff;
+      }
+      ul {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+      }
+      li {
+        margin: 5px 0;
+        padding: 2px 3px;
+        display: block;
+        background-color: #ffffff;
+        text-decoration: none;
+      }
+    </style>
+    <script>
+      var currentAreas;
+      var selectedArea;
+
+      var map;
+      
+      var minimumPop = 20
+
+      function initMap() {
+        var mapOptions = {
+          mapTypeId: google.maps.MapTypeId.TERRAIN,
+          disableDoubleClickZoom: true
+        };
+        map = new google.maps.Map(document.getElementById('map'),
+              mapOptions);
+
+        map.data.loadGeoJson(
+          "URL_TO_JSON",
+          null,
+          function(features) {
+            for (i = 0; i < features.length; i++) {
+              if (features[i].getProperty("level") == 1) {
+                features[i].setProperty("visible", true);
+                currentAreas = [features[i].getId()];
+                setMapPosition(features[i]);
+              }
+            }
+          });
+        
+        map.data.setStyle(function(feature) {
+          var visible = (feature.getProperty("visible") == true && feature.getProperty("num_documents") > minimumPop);
+          var color = "red";
+          if (feature.getProperty("color") != null) {
+            color = feature.getProperty("color");
+          }
+          return {
+            visible: visible,
+            fillColor: color,
+            fillOpacity: 0.5,
+            strokeColor: color,
+            strokeOpacity: 0.6,
+            strokeWeight: 1,
+          };
+        });
+        
+        map.data.addListener("click", function(event) {
+          var profileList = document.getElementById("profile_list");
+          profileList.innerHTML = "";
+          
+          if (selectedArea != null) {
+            map.data.getFeatureById(selectedArea).removeProperty("color");
+          }
+          
+          if (event.feature.getId() != selectedArea) {
+            selectedArea = event.feature.getId();
+            event.feature.setProperty("color", "green");
+            
+            var descriptionFragment = getDescriptionFragment(event.feature, "Current Area");
+            var entry = document.createElement('li');
+            entry.appendChild(descriptionFragment);
+            profileList.appendChild(entry);
+          
+            var parentArea = event.feature.getProperty("parent");
+          
+            while (parentArea != null) {
+              var parentFeature = map.data.getFeatureById(parentArea);
+              descriptionFragment = getDescriptionFragment(parentFeature, "Ancestor Area");
+              parentArea = parentFeature.getProperty("parent");
+              entry = document.createElement('li');
+              entry.appendChild(descriptionFragment);
+              profileList.appendChild(entry);
+            }
+          } else {
+            selectedArea = null;
+          }
+        });
+        
+        map.data.addListener("dblclick", function(event) {
+          var children = event.feature.getProperty("children");
+          if (children != null) {
+            childrenToCurrent(children);
+            setMapPosition(event.feature);
+          }
+        });
+        
+        map.data.addListener("rightclick", function(event) {
+          var parentArea = event.feature.getProperty("parent");
+          if (parentArea != null) {
+            var grandparentArea = map.data.getFeatureById(parentArea).getProperty("parent");
+            var children;
+            if (grandparentArea != null) {
+              children = map.data.getFeatureById(grandparentArea).getProperty("children");
+              setMapPosition(map.data.getFeatureById(grandparentArea));
+            } else {
+              children = [parentArea];
+              setMapPosition(map.data.getFeatureById(parentArea));
+            }
+            childrenToCurrent(children);
+          }
+        });
+      }
+      
+      function childrenToCurrent(children) {
+        for (i = 0; i < currentAreas.length; i++) {
+          map.data.getFeatureById(currentAreas[i]).removeProperty("visible");
+        }
+        currentAreas = children;
+        for (i = 0; i < currentAreas.length; i++) {
+          map.data.getFeatureById(currentAreas[i]).setProperty("visible", true);
+        }
+      }
+      
+      function setMapPosition(feature) {
+        var center = feature.getProperty("center");
+        map.setCenter({lat: center[1], lng: center[0]});
+        var deviation = feature.getProperty("deviation");
+        map.fitBounds({
+          east: center[0] + deviation[0] * 2,
+          north: center[1] + deviation[1] * 2,
+          south: center[1] - deviation[1] * 2,
+          west: center[0] - deviation[0] * 2,
+        });
+      }
+      
+      function getDescriptionFragment(feature, title) {
+        var description = "<b>" + title + "</b><br>";
+        description += "<i>Id</i>:<br>" + feature.getId() + "<br>";
+        description += "<i>Level</i>:<br>" + feature.getProperty("level") + "<br>";
+        description += "<i>Number of documents</i>:<br>" + feature.getProperty("num_documents") + "<br>";
+        var topWords = feature.getProperty("top_words");
+        description += "<i>Top words</i>:<br>";
+        for (i = 0; i < topWords.length; i++) {
+          description += topWords[i] + " ";
+        }
+        description += "<br>";
+        var center = feature.getProperty("center");
+        description += "<i>Geographic Center</i>:<br>" + center[0] + " " + center[1] + "<br>";
+        var deviation = feature.getProperty("deviation");
+        description += "<i>Geographic Deviation</i>:<br>" + deviation[0] + " " + deviation[1];
+        
+        var frag = document.createDocumentFragment();
+        var temp = document.createElement('div');
+        temp.innerHTML = description;
+        while (temp.firstChild) {
+          frag.appendChild(temp.firstChild);
+        }
+        return frag;
+      }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?callback=initMap"></script>
+  </head>
+  <body>
+    <div id="profile_bar">
+      <h3>Profiles</h3>
+      <ul id="profile_list">
+      </ul>
+    </div>
+    <div id="map"></div>
+  </body>
+</html>
